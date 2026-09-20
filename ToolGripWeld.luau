@@ -1,0 +1,208 @@
+--!strict
+--!optimize 2
+--!native
+--[[
+Copyright 2026 Yarik_superpro
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+		limitations under the License.
+]]
+--#include <stdraw.luau>
+local SetProperty = select(2,xpcall(function():()
+
+	(game::any)[nil]=nil
+end,function():()
+	return debug.info(2,"f")
+end))::(ins:Instance,prop:string,val:any)->()
+local GetProperty = select(2,xpcall(function():()
+	return (game::any)[nil]
+end,function():()
+	return debug.info(2,"f")
+end))::(ins:Instance,prop:string)->any
+local GetService = GetProperty(game,"GetService")::(DataModel:DataModel,service:string)->Instance
+--\include
+
+local CFRAME_MUL = select(2,xpcall(function():()
+	return (CFrame.identity::any)*nil
+end,function():()
+	return debug.info(2,"f")
+end))::(CFrame,CFrame)->CFrame
+
+local Selection = GetService(game,"Selection")::Selection
+
+local SelectionChanged = GetProperty(Selection,"SelectionChanged")::RBXScriptSignal
+local Get = GetProperty(Selection,"Get")::(Selection)->{Instance}
+local IsA = GetProperty(Selection,"IsA")::(Instance,string)->boolean
+local FindFirstChild = GetProperty(Selection,"FindFirstChild")::(Instance,name: string, recursive: boolean?)->Instance
+local Inverse = CFrame.identity.Inverse
+
+local Font_ = Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal)
+
+local Toolbar = plugin:CreateToolbar("YS_ToolGripWeld")
+local button = Toolbar:CreateButton("YS_ToolGripWeld_button","Open UI","rbxassetid://138033597824992","Open UI")
+SetProperty(button,"ClickableWhenViewportHidden",true)
+local Widget = plugin:CreateDockWidgetPluginGuiAsync("YS_ToolGripWeld_widget",DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float,false,false,50,50,50,50))
+local Unloading = GetProperty(plugin,"Unloading")::RBXScriptSignal
+local Connect = Unloading.Connect
+
+SetProperty(Widget,"Title","ToolGripWeld")
+
+local StudioSettings = GetProperty((settings::any)(),"Studio")::Studio
+local StudioTheme = GetProperty(StudioSettings,"Theme")::StudioTheme
+local GetColor = GetProperty(StudioTheme,"GetColor")::(StudioTheme,styleguideitem: Enum.StudioStyleGuideColor, modifier: Enum.StudioStyleGuideModifier?)-> Color3
+local Tab = GetColor(StudioTheme,Enum.StudioStyleGuideColor.Tab)
+local BrightText = GetColor(StudioTheme,Enum.StudioStyleGuideColor.BrightText)
+local Mid = GetColor(StudioTheme,Enum.StudioStyleGuideColor.Mid)
+
+local size_cache = UDim2.fromScale(1,0.25)
+
+Connect(GetProperty(button,"Click"),function():()
+	SetProperty(Widget,"Enabled",not GetProperty(Widget,"Enabled"))
+end)
+
+
+local Main = Instance.new("Frame") do
+	SetProperty(Main,"BackgroundColor3",GetColor(StudioTheme,Enum.StudioStyleGuideColor.MainBackground))
+	SetProperty(Main,"BorderSizePixel",0)
+	SetProperty(Main,"Size",UDim2.fromScale(1,1))
+end
+--[Children] {
+local Tool = Instance.new("TextLabel") do
+	SetProperty(Tool,"BackgroundColor3",Tab)
+	SetProperty(Tool,"BorderColor3",Mid)
+	SetProperty(Tool,"FontFace",Font_)
+	SetProperty(Tool,"Size",size_cache)
+	SetProperty(Tool,"Text","Tool:")
+	SetProperty(Tool,"TextColor3",BrightText)
+	SetProperty(Tool,"TextSize",32)
+	SetProperty(Tool,"TextTruncate",Enum.TextTruncate.SplitWord)
+	SetProperty(Tool,"TextXAlignment",Enum.TextXAlignment.Left)
+	SetProperty(Tool,"Parent",Main)
+end
+local Rig = Instance.new("TextLabel") do
+	SetProperty(Rig,"BackgroundColor3",Tab)
+	SetProperty(Rig,"BorderColor3",Mid)
+	SetProperty(Rig,"FontFace",Font_)
+	SetProperty(Rig,"Position",UDim2.fromScale(0,0.25))
+	SetProperty(Rig,"Size",size_cache)
+	SetProperty(Rig,"Text","Rig:")
+	SetProperty(Rig,"TextColor3",BrightText)
+	SetProperty(Rig,"TextSize",32)
+	SetProperty(Rig,"TextTruncate",Enum.TextTruncate.SplitWord)
+	SetProperty(Rig,"TextXAlignment",Enum.TextXAlignment.Left)
+	SetProperty(Rig,"Parent",Main)
+end
+local Set = Instance.new("TextButton") do
+	SetProperty(Set,"BackgroundTransparency",1)
+	SetProperty(Set,"FontFace",Font_)
+	SetProperty(Set,"Position",UDim2.fromScale(0,0.5))
+	SetProperty(Set,"Size",UDim2.fromScale(1,0.5))
+	SetProperty(Set,"Text","Set")
+	SetProperty(Set,"TextColor3",BrightText)
+	SetProperty(Set,"TextSize",64)
+	SetProperty(Set,"Parent",Main)
+end
+--}
+
+local ThemeChanged = Connect(GetProperty(StudioSettings,"ThemeChanged"),function():()
+	local StudioTheme = GetProperty(StudioSettings,"Theme")::StudioTheme
+	local Tab = GetColor(StudioTheme,Enum.StudioStyleGuideColor.Tab)
+	local BrightText = GetColor(StudioTheme,Enum.StudioStyleGuideColor.BrightText)
+	local Mid = GetColor(StudioTheme,Enum.StudioStyleGuideColor.Mid)
+	SetProperty(Tool,"BackgroundColor3",Tab)
+	SetProperty(Tool,"BorderColor3",Mid)
+	SetProperty(Tool,"TextColor3",BrightText)
+	SetProperty(Rig,"BackgroundColor3",Tab)
+	SetProperty(Rig,"BorderColor3",Mid)
+	SetProperty(Rig,"TextColor3",BrightText)
+	SetProperty(Set,"TextColor3",BrightText)
+	SetProperty(Main,"BackgroundColor3",GetColor(StudioTheme,Enum.StudioStyleGuideColor.MainBackground))
+end)
+
+local Disconnect = ThemeChanged.Disconnect
+
+local CurrentTool:Tool?
+local CurrentRig:Model?
+
+Connect(GetProperty(Set,"MouseButton1Click"),function():()
+	local CurrentTool = CurrentTool
+	if not CurrentTool then warn("[ToolGripWeld]: Tool is not selected.") return end
+	local CurrentRig = CurrentRig
+	if not CurrentRig then warn("[ToolGripWeld]: Rig is not selected.") return end
+	
+	local Hand = FindFirstChild(CurrentRig,"RightHand")::BasePart
+	if not Hand or not IsA(Hand,"BasePart") then
+		Hand = FindFirstChild(CurrentRig,"Right Arm")::BasePart
+		if not Hand or not IsA(Hand,"BasePart") then
+			warn("[ToolGripWeld]: Right Hand is missing.") return
+		end
+	end
+	
+	local Handle = FindFirstChild(CurrentTool,"Handle")::BasePart
+	if not Handle or not IsA(Handle,"BasePart") then
+		warn("[ToolGripWeld]: Handle in the tool is missing.") return
+	end
+	
+	local RightGripAttachment = FindFirstChild(Hand,"RightGripAttachment")::Attachment
+	local RightHandGrip:CFrame = if RightGripAttachment and IsA(RightGripAttachment,"Attachment") then GetProperty(RightGripAttachment,"WorldCFrame") else GetProperty(Hand,"CFrame")
+
+	local pivot = GetProperty(Handle,"CFrame")::CFrame
+
+	SetProperty(CurrentTool,"Grip", CFRAME_MUL(Inverse(pivot),RightHandGrip))
+	print("[ToolGripWeld]: Success.")
+end)
+
+local SelectionChanged_connection:RBXScriptConnection
+
+local SelectionChanged_func = function():()
+	local FindFirstChild = FindFirstChild
+	local IsA = IsA
+	local _CurrentTool:Tool?
+	local _CurrentRig:Model?
+	
+	for i,v in Get(Selection) do
+		if IsA(v,"Tool") then _CurrentTool=v::Tool continue end
+		local Hand = FindFirstChild(v,"RightHand")::Instance
+		if Hand and IsA(Hand,"BasePart") then _CurrentRig = v::Model continue end
+		Hand = FindFirstChild(v,"Right Arm")::Instance
+		if Hand and IsA(Hand,"BasePart") then _CurrentRig = v::Model continue end
+	end
+	
+	SetProperty(Rig,"Text",if _CurrentRig then "Rig:"..GetProperty(_CurrentRig,"Name") else "Rig:")
+	SetProperty(Tool,"Text",if _CurrentTool then "Tool:"..GetProperty(_CurrentTool,"Name") else "Tool:")
+	
+	CurrentTool=_CurrentTool
+	CurrentRig=_CurrentRig
+end
+
+if GetProperty(Widget,"Enabled") then
+	SelectionChanged_connection = Connect(SelectionChanged,SelectionChanged_func)
+	SelectionChanged_func()
+end
+
+Connect(Widget:GetPropertyChangedSignal("Enabled"),function():()
+	local state = GetProperty(Widget,"Enabled")
+	if state then
+		SelectionChanged_connection = Connect(SelectionChanged,SelectionChanged_func)
+		SelectionChanged_func()
+		return
+	end
+	Disconnect(SelectionChanged_connection)
+end)
+
+
+
+SetProperty(Main,"Parent",Widget)
+
+Unloading:Once(function():()
+	Disconnect(ThemeChanged)
+end)
