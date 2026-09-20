@@ -43,6 +43,7 @@ local SelectionChanged = GetProperty(Selection,"SelectionChanged")::RBXScriptSig
 local Get = GetProperty(Selection,"Get")::(Selection)->{Instance}
 local IsA = GetProperty(Selection,"IsA")::(Instance,string)->boolean
 local FindFirstChild = GetProperty(Selection,"FindFirstChild")::(Instance,name: string, recursive: boolean?)->Instance
+local FindFirstChildOfClass = GetProperty(Selection,"FindFirstChildOfClass")::(Instance,name: string)->Instance
 local Inverse = CFrame.identity.Inverse
 
 local Font_ = Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal)
@@ -64,6 +65,7 @@ local BrightText = GetColor(StudioTheme,Enum.StudioStyleGuideColor.BrightText)
 local Mid = GetColor(StudioTheme,Enum.StudioStyleGuideColor.Mid)
 
 local size_cache = UDim2.fromScale(1,0.25)
+local R6_Offset = CFrame.Angles(-math.pi*0.5,0,0)
 
 Connect(GetProperty(button,"Click"),function():()
 	SetProperty(Widget,"Enabled",not GetProperty(Widget,"Enabled"))
@@ -156,6 +158,12 @@ Connect(GetProperty(Set,"MouseButton1Click"),function():()
 	local RightHandGrip:CFrame = if RightGripAttachment and IsA(RightGripAttachment,"Attachment") then GetProperty(RightGripAttachment,"WorldCFrame") else GetProperty(Hand,"CFrame")
 
 	local pivot = GetProperty(Handle,"CFrame")::CFrame
+	local humanoid = FindFirstChildOfClass(CurrentRig,"Humanoid")::Humanoid?
+	if humanoid and GetProperty(humanoid,"RigType")==Enum.HumanoidRigType.R6 then
+		SetProperty(CurrentTool,"Grip", CFRAME_MUL(CFRAME_MUL(Inverse(pivot),RightHandGrip),R6_Offset))
+		print("[ToolGripWeld]: Success.")
+		return
+	end
 
 	SetProperty(CurrentTool,"Grip", CFRAME_MUL(Inverse(pivot),RightHandGrip))
 	print("[ToolGripWeld]: Success.")
